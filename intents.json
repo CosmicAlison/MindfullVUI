@@ -1,0 +1,57 @@
+{
+    "intents": [
+      {
+        "tag": "pyschologists",
+        "patterns": ["therapists near me", "psychologists near me", 
+    "therapists close", "therapists around", "where can I find a pyschologist", 
+"where can I find a therapist", "which pyschologist", "I need a psychologist", 
+"I am looking for a psychologist", "psychologist", "psychologist close"],
+        "responses": ["Which city and area are you trying to find a psychologist in?"]
+      },
+      {
+        "tag": "workshops",
+        "patterns": ["when is the next workshop", "what is the next workshop about?", "workshop?", "i want to watch a workshop", "i'm looking for workshops"],
+        "responses": 
+        ["These are the upcoming workshops, would you like to register for the upcoming workshops?",
+    "Here are some workshops happening soon, can I help you register for one of them?"]
+      },
+      {
+        "tag": "podcast",
+        "patterns": ["when is the next podcast", "what is the next podcast about?", "podcast?", "looking for podcasts", "recent podcasts","i'm looking for podcasts", "i want to watch a podcast", "what can i listen to", "i want to listen to podcasts"],
+        "responses": 
+        ["These are the upcoming podcast, would you like to register for the upcoming podcast?",
+    "Here are some of the recent podcasts, would you like to register?"]
+      },
+      {
+        "tag": "power skills sessions",
+        "patterns": ["what are power skills training sessions?", "how can i have a power skill session?",
+    "how can i join a power skill session", "power skills?"],
+        "responses": 
+        ["The power skills sessions help your self improvement in areas such as emotional intelligence, work and personal values. Would you like to register for a session?"]
+      },
+      {
+        "tag": "counselling",
+        "patterns": ["counselling sessions?", "how can i book a counselling session?",
+    "what are the counselling sessions about?", "how can I get counseling?", "i need counselling", "i need help", "i am not emotionally well", 
+"i am overwhelmed", "i am upset", "counsellor", "middlesex counseling", "middlesex counsellors"],
+        "responses": 
+        ["The counselling sessions are designed to give students anonymous support, would you like to book a session?"]
+    },
+    {
+        "tag": "feedback",
+        "patterns": ["can I give feedback?", "this is what i think of the chatbot", "feedback", "i have this to say about the chatbot", "chatbot",
+    "what is the chatbot about?", "purpose of the chatbot?", "chatbot?", "bot", "wellbeing service"],
+        "responses": 
+        ["This chatbot was created to help students at Middlesex University access wellbeing services, would you like to provide feedback?"]
+    },
+    {
+        "tag": "greetings",
+        "patterns": ["hi", "hey", "how are you", "good morning", "how is it going?",
+    "good night", "good afternoon", "good day", "what's up?"],
+        "responses": 
+        ["hi, how are you?"]
+    }
+    ]
+  }
+  
+

@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="/static/styles/styles_main.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <title>MindfullVUI</title>
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+</head>
+<body class="bg"> 
+    <div id="map"></div>
+    <div id="calendar"></div>
+    <div class="container w-60 mh-100 bg-light text-black" style="height: 100%; width: 90%; position: absolute; left: 5%">
+        <p id="status">Press microphone to start interacting...</p>
+        <div class="loading" id="loading">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <div id="log">
+            <div id="chatbot"></div>
+            <div id="user_log"></div>
+        </div>
+        <div id="input_area"><textarea id="text_input" name="input_text" placeholder="type..."></textarea></div>
+        <div id="toggle">
+            <button id="toggle_button" onclick="startSpeech()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="white" class="bi bi-mic-fill" viewBox="0 0 16 16">
+                    <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0z"/>
+                    <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5"/>
+                </svg>
+            </button>
+            <button id="send_button" onclick="sendText()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="white" class="bi bi-send" viewBox="0 0 16 16">
+                    <path d="M15.854.146a.5.5 0 0 1 .11.54l-5.819 14.547a.75.75 0 0 1-1.329.124l-3.178-4.995L.643 7.184a.75.75 0 0 1 .124-1.33L15.314.037a.5.5 0 0 1 .54.11ZM6.636 10.07l2.761 4.338L14.13 2.576zm6.787-8.201L1.591 6.602l4.339 2.76z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+</body>
+    <script>
+      const SpeechRecognition = 
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+        const SpeechGrammarList = 
+        window.SpeechGrammarList || window.webkitSpeechGrammarList;
+        const SpeechRecognitionEvent = 
+        window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent;
+
+        // Initialize speech recognition
+        const recognition = new webkitSpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        recognition.maxAlternatives = 1;
+       
+        intro_utterances = {
+            welcome : "Welcome to Middlesex University's wellbeing service! I am here to assist you. To begin, perform the wellbeing assesment. ",
+            assesment : [
+                'Rate how you are feeling at moment 0 if you do not feel sad,'+ 
+                '1 if you feel sad, 2 if you are sad all the time and cannot snap'+
+                'out of it, 3 if you are so sad and unhappy that you cannot stand it.', 
+
+                'Rate your outlook for the future, 0 if you are not particularly'+
+                'discouraged about the future. 1 if you feel discouraged about the future.'+
+                '2 if you feel you have nothing to look forward to. 3 if you feel the' +
+                'future is hopeless and that things cannot improve.', 
+
+                'Rate your personal outlook, 0 for I do not feel like a failure.'+
+                '1 for I feel I have failed more than the average person.'+
+                '2 for As I look back on my life, all I can see is a lot of failures.'+
+                '3 for I feel I am a complete failure as a person.',
+
+                'Rate your satisfaction levels, 0 for I get as much satisfaction out of things as I used to'+
+                '1 for I do not enjoy things the way I used to.'+
+                '2 for I do not get real satisfaction out of anything anymore.'+
+                '3 for I am dissatisfied or bored with everything.',
+
+                'Rate your guilt levels, 0 for I do not feel particularly guilty'+
+                '1 for I feel guilty a good part of the time.'+
+                '2 for I feel quite guilty most of the time.'+
+                '3 for I feel guilty all of the time.' 
+            ],
+
+            menu: "To interact with the chatbot you can say commands like 'counseling sessions'"+
+            " or 'wellbeing podcast', wellbeing workshops, power skills sessions. You can also say"+
+            "more options to get more options relating to the chatbot. What would you like to explore?"
+
+        };
+
+    function sendText() {
+    // Get the value of the textarea
+        var text = document.getElementById("text_input").value;
+        //add the message to the log 
+        document.getElementById("log").innerHTML += '<div class="user_message">'+text+'</div>';
+
+        //check is user last asked for a psychologists near them and direct them towards map handling
+        if (lastResponse == "Which city and area are you trying to find a psychologist in?"){
+            console.log("searching for pyschologist");
+            //search for given area in text on the map 
+            loadMap(text);
+            
+            //reset last response 
+            lastResponse = null;
+                   
+        }
+        else if(lastResponse == "These are the upcoming workshops, would you like to register for the upcoming workshops?" 
+                || lastResponse == "Here are some workshops happening soon, can I help you register for one of them?"){
+            if(text.includes("yes")){
+                loadCalendar("workshops");
+                lastResponse = null;
+            }
+            else if(text.includes("no")){
+
+            }
+            else{
+                speak("I couldn't quite understand your request. I can assist you "+
+                "with booking counselling sessions, power skills sessions, registering "+
+                "for workshops, finding psychologists near you, seeing latest podcasts and other general requests.");
+            }
+        }
+        else{
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/speech", true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.onreadystatechange = function () {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    speak(this.responseText);
+                    lastResponse = this.responseText;
+                }
+                else if(this.readyState == 4 && this.status !== 200){
+                    const status = document.getElementById("status").innerHTML = "I'm sorry I couldn't quite understand your request.";
+                    lastResponse = null;
+                }
+            }
+            // Send the text as JSON data
+            xhr.send(JSON.stringify(text));
+        };
+    
+    }
+        //check if user inputted a valid place 
+    async function is_valid_place(place) {
+        const apiKey = 'AIzaSyDYLdVi_Uiha4kdqz6r7fyShiamf7XmCCo';
+        const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(place)}&key=${apiKey}`;
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+
+            if (data.status === 'OK') {
+                return true;
+            } else {
+                return false;
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            return false;
+        }
+    }
+
+    function loadCalendar(request){
+        var xhttp = new XMLHttpRequest();
+        xhttp.onreadystatechange = function() {
+            if (this.readyState == 4 && this.status == 200) {
+                var eventData = JSON.parse(this.responseText);
+                console.log("calendar"+eventData);
+                renderCalendar(eventData);
+            }
+        };
+        xhttp.open("GET", "/" + request, true);
+        xhttp.send();
+    }
+
+    function renderCalendar(workshops) {
+
+        console.log(typeof(workshops));
+        // Get the calendar element
+        var calendarEl = document.getElementById('calendar');
+
+        calendarEl.style.display = 'block';
+    
+
+        // Clear any existing content in the calendar element
+        calendarEl.innerHTML = '';
+
+        // Create a table element to represent the calendar
+        var ctable = document.createElement('table');
+        ctable.classList.add('calendar-table');
+
+        // Create the header row for days of the week
+        var headerRow = document.createElement('tr');
+        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(function(day) {
+            var th = document.createElement('th');
+            th.textContent = day;
+            headerRow.appendChild(th);
+        });
+        ctable.appendChild(headerRow);
+        
+        // Get the current month and year
+        var currentDate = new Date();
+        var currentMonth = currentDate.getMonth();
+        var currentYear = currentDate.getFullYear();
+
+        // Create a new date object for the first day of the month
+        var firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+
+        // Get the day of the week for the first day of the month
+        var firstDayOfWeek = firstDayOfMonth.getDay();
+
+        // Create a new date object for the last day of the month
+        var lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
+
+        // Calculate the number of days in the month
+        var numDaysInMonth = lastDayOfMonth.getDate();
+
+        // Create calendar cells for each day in the month
+        var date = 1;
+        for (var i = 0; i < 6; i++) { // 6 weeks in total
+            var row = document.createElement('tr');
+            for (var j = 0; j < 7; j++) { // 7 days in a week
+                if (i === 0 && j < firstDayOfWeek) {
+                    // Create empty cells before the first day of the month
+                    var cell = document.createElement('td');
+                    row.appendChild(cell);
+                } else if (date > numDaysInMonth) {
+                    // Create empty cells after the last day of the month
+                    var cell = document.createElement('td');
+                    row.appendChild(cell);
+                } else {
+                    // Create a cell for the current date
+                    var cell = document.createElement('td');
+                    cell.textContent = date;
+
+                    // Check if there are workshops on this date
+                    var workshopsOnDate = workshops.filter(function(workshop) {
+                        return new Date(workshop.date).getDate() === date;
+                    });
+
+                    // Render workshop details within the cell
+                    workshopsOnDate.forEach(function(workshop) {
+                        var workshopTitle = document.createElement('div');
+                        workshopTitle.textContent = workshop.title;
+                        cell.appendChild(workshopTitle);
+
+                        var workshopDescription = document.createElement('div');
+                        workshopDescription.textContent = workshop.description;
+                        cell.appendChild(workshopDescription);
+                    });
+
+                    row.appendChild(cell);
+                    date++;
+                }
+            }
+            ctable.appendChild(row);
+            calendarEl.appendChild(ctable);
+    }}
+
+        //start map incase user asks about local psychologists 
+        function loadMap(place) {
+            console.log(place);
+
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: {lat: -20.2067, lng: 57.6755},
+                zoom: 4
+            });
+            
+            map_div = document.getElementById("map");
+            //only show map when the user requests 
+            if (lastResponse == "Which city and area are you trying to find a psychologist in?"){
+                is_valid_place(place)
+                .then(valid => {
+                    if (valid) {
+                        map_div.style.display = 'block';
+                        console.log(`${place} is a valid place.`);
+                    } else {
+                        speak("I couldn't quite understand your request, it seems the area you chose is not valid. I can assist you "+
+                "with booking counselling sessions, power skills sessions, registering "+
+                "for workshops, finding psychologists near you, seeing latest podcasts and other general requests."+
+                "What would you like me to help you with today?");
+                        console.log(`${place} is not a valid place.`);
+                        lastResponse = null;
+                    }
+                })
+                .catch(error => console.error('Error occurred:', error));
+            }
+
+            var request = {
+                query: 'psychologists in' + place,
+                fields: ['name', 'geometry'],
+            };
+
+            var service = new google.maps.places.PlacesService(map);
+            service.textSearch(request, function(results, status) {
+                if (status === google.maps.places.PlacesServiceStatus.OK) {
+                    console.log(results);
+                    for (var i = 0; i < results.length; i++) {
+                        createMarker(results[i]);
+                    }
+                }
+                else{
+                    speak("I couldn't find psychologists in the area you described.I can assist you "+
+                "with booking counselling sessions, power skills sessions, registering "+
+                "for workshops, finding psychologists near you, seeing latest podcasts and other general requests."+
+                "What would you like me to help you with today?");
+                lastResponse = null;
+                }
+            });
+
+            function createMarker(place) {
+                var marker = new google.maps.Marker({
+                    map: map,
+                    position: place.geometry.location,
+                    title: place.name
+                });
+            }
+        }
+      
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log("loaded" + intro_utterances.welcome);
+            speak(intro_utterances.welcome);
+        });
+        // Store loading animation
+        const loadingDiv = document.getElementById("loading");
+
+        function speak(utterance){
+            document.getElementById("toggle_button").disabled = true;
+            const utter = new SpeechSynthesisUtterance(utterance);
+            window.speechSynthesis.speak(utter);
+            document.getElementById("log").innerHTML += '<div class="chat_bot_message">'+
+            utterance+'</div>';
+            document.getElementById("toggle_button").disabled = false;
+
+        }
+
+        // Event listener for the microphone button
+        function startSpeech() {
+            const status = document.getElementById("status").innerHTML = "Listening...";
+            recognition.start();
+            console.log('Speech recognition started');
+
+            // Show loading animation
+            loadingDiv.style.display = "block";
+        }; 
+        
+        var lastResponse;
+
+        recognition.onresult = (e) => {
+                const result = event.results[0][0].transcript.trim().toLowerCase();
+                console.log('You said:', result);
+                document.getElementById("log").innerHTML += '<div class="user_message">'+result+'</div>';
+                //load map of nearby pyschologists if the client requested 
+                var xhttp = new XMLHttpRequest();
+                if (lastResponse == "Which city and area are you trying to find a psychologist in?"){
+                    console.log("searching for pyschologist")
+                        loadMap(result);
+                    
+                        //console.log(e);
+                        //const status = document.getElementById("status").innerHTML = "I couldn't find the area you requested...";
+                    lastResponse = null;
+                    loadingDiv.style.display = "none";
+                }
+                else if(lastResponse == "These are the upcoming workshops, would you like to register for the upcoming workshops?" 
+                || lastResponse == "Here are some workshops happening soon, can I help you register for one of them?"){
+                    console.log("opening workshops");
+                    loadCalendar("workshops");
+                    lastResponse = null;
+
+                }
+                else{
+                xhttp.onreadystatechange = function () {
+                    if (this.readyState == 4 && this.status == 200){
+                        // Hide loading animation after processing
+                        loadingDiv.style.display = "none";
+                        
+                        speak(this.responseText);
+                        const status = document.getElementById("status").innerHTML = "Press microphone to interact...";
+                        lastResponse = this.responseText;
+                      
+                    }
+                    else if(this.readyState == 4 && this.status !== 200){
+                        const status = document.getElementById("status").innerHTML = "I'm sorry I couldn't quite understand your request.";
+                        lastResponse = null;
+                    }
+                }
+
+                xhttp.open("POST", "/speech", true);
+                console.log("sent_to_server");
+                xhttp.setRequestHeader("Content-type", "application/json");
+                xhttp.send(JSON.stringify(result));
+                console.log(result);
+        }
+    }
+
+        recognition.onspeechend = () => {
+        recognition.stop();
+        };
+
+        recognition.onerror = (event) => {
+            console.log(event.error);
+            document.getElementById("status").innerHTML = "I'm sorry I couldn't quite catch that.";
+            // Hide loading animation in case of error
+            loadingDiv.style.display = "none";
+            lastResponse = null;
+        };
+    </script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDYLdVi_Uiha4kdqz6r7fyShiamf7XmCCo&callback=loadMap&libraries=places">
+    </script>
+</body>
+</html>

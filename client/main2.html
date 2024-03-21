@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link rel="stylesheet" href="styles/styles_main.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="utf-8">
+    <title>MindfullVUI</title>
+</head>
+<body class="bg">
+    <div class="container w-100 mh-100 bg-dark text-white" style="height: 640px; position: absolute; top: 20px; left: 8%">
+        <p id="status">Press microphone to start interacting...</p>
+        <div class="loading" id="loading">
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+        <div id="log"></div>
+        <div id="toggle">
+            <button id="toggle_button">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="white" class="bi bi-mic-fill" viewBox="0 0 16 16">
+                    <path d="M5 3a3 3 0 0 1 6 0v5a3 3 0 0 1-6 0z"/>
+                    <path d="M3.5 6.5A.5.5 0 0 1 4 7v1a4 4 0 0 0 8 0V7a.5.5 0 0 1 1 0v1a5 5 0 0 1-4.5 4.975V15h3a.5.5 0 0 1 0 1h-7a.5.5 0 0 1 0-1h3v-2.025A5 5 0 0 1 3 8V7a.5.5 0 0 1 .5-.5"/>
+                </svg>
+            </button>
+            <button id="toggle_stop">
+                <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" fill="white" class="bi bi-stop-circle-fill" viewBox="0 0 16 16">
+                    <path d="M16 8A8 8 0 1 1 0 8a8 8 0 0 1 16 0M6.5 5A1.5 1.5 0 0 0 5 6.5v3A1.5 1.5 0 0 0 6.5 11h3A1.5 1.5 0 0 0 11 9.5v-3A1.5 1.5 0 0 0 9.5 5z"/>
+                </svg>
+            </button>
+        </div>
+    </div>
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+
+        const startRecordingButton = document.getElementById('toggle_button');
+        const stopRecordingButton = document.getElementById('toggle_stop');
+
+        startRecordingButton.addEventListener('click', startRecording);
+        stopRecordingButton.addEventListener('click', stopRecording);
+
+        intro_utterances = {
+            welcome : "Welcome to Middlesex University's wellbeing service! I am here to assist you. To begin perform the wellbeing assesment. ",
+            assesment : [
+                'Rate how you are feeling at moment 0 if you do not feel sad,'+ 
+                '1 if you feel sad, 2 if you are sad all the time and cannot snap'+
+                'out of it, 3 if you are so sad and unhappy that you cannot stand it.', 
+
+                'Rate your outlook for the future, 0 if you are not particularly'+
+                'discouraged about the future. 1 if you feel discouraged about the future.'+
+                '2 if you feel you have nothing to look forward to. 3 if you feel the' +
+                'future is hopeless and that things cannot improve.', 
+
+                'Rate your personal outlook, 0 for I do not feel like a failure.'+
+                '1 for I feel I have failed more than the average person.'+
+                '2 for As I look back on my life, all I can see is a lot of failures.'+
+                '3 for I feel I am a complete failure as a person.',
+
+                'Rate your satisfaction levels, 0 for I get as much satisfaction out of things as I used to'+
+                '1 for I do not enjoy things the way I used to.'+
+                '2 for I do not get real satisfaction out of anything anymore.'+
+                '3 for I am dissatisfied or bored with everything.',
+
+                'Rate your guilt levels, 0 for I do not feel particularly guilty'+
+                '1 for I feel guilty a good part of the time.'+
+                '2 for I feel quite guilty most of the time.'+
+                '3 for I feel guilty all of the time.' 
+            ],
+
+            menu: "To interact with the chatbot you can say commands like 'counseling sessions'"+
+            " or 'wellbeing podcast', wellbeing workshops, power skills sessions. You can also say"+
+            "more options to get more options relating to the chatbot. What would you like to explore?"
+
+        };
+
+      
+        document.addEventListener("DOMContentLoaded", function() {
+            console.log("loaded" + intro_utterances.welcome);
+            const intro_utterance = new SpeechSynthesisUtterance(intro_utterances.welcome);
+            window.speechSynthesis.speak(intro_utterance);
+
+        });
+
+        // Store loading animation
+        const loadingDiv = document.getElementById("loading");
+        async function startRecording() {
+            const utterance1 = new SpeechSynthesisUtterance(intro_utterances.welcome);
+            window.speechSynthesis.speak(utterance1);
+            // Show loading animation
+            loadingDiv.style.display = "block";
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                mediaRecorder.addEventListener('dataavailable', event => {
+                    audioChunks.push(event.data);
+                });
+
+                startRecordingButton.disabled = true;
+                stopRecordingButton.disabled = false;
+                audioChunks = [];
+                mediaRecorder.start();
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+                mediaRecorder.stop();
+                startRecordingButton.disabled = false;
+                stopRecordingButton.disabled = true;
+                sendAudioToServer();
+            }
+        }
+
+        function sendAudioToServer() {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+
+            fetch('/upload-audio', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                loadingDiv.style.display = "none";
+                document.getElementById("log").innerHTML += '<div class="user_log">'+result+'</div>';
+                if (response.ok) {
+                    console.log('Audio uploaded successfully');
+                } else {
+                    const utterance = new SpeechSynthesisUtterance("error processing input");
+                    window.speechSynthesis.speak(utterance);
+                    loadingDiv.style.display = "none";
+                    console.error('Failed to upload audio:', response.statusText);
+                }
+            })
+            .catch(error => {
+                loadingDiv.style.display = "none";
+                console.error('Error occurred during audio upload:', error);
+            });
+        }
+    </script>
+</body>
+</html>

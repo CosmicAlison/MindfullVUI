@@ -1,0 +1,117 @@
+.bg{
+    background-image: url(/assets/abstract_pattern.jpg);
+    background-size: cover;
+}
+
+#toggle_button{
+    background-color: transparent;
+    border-color: none;
+    box-shadow: none;
+    border-radius: 100%;
+    padding: 1%;
+    position: absolute;
+    top: 80%;
+    right: 10%;
+
+}
+
+#toggle_stop{
+    background-color: transparent;
+    border-color: none;
+    box-shadow: none;
+    border-radius: 100%;
+    padding: 1%;
+    position: absolute;
+    top: 80%;
+    right: 2%;
+
+}
+
+#user{
+    box-shadow: none;
+    border-radius: 100%;
+    padding: 1%;
+    background-color: black;
+    border-color: none;
+    position: absolute;
+    top: 10%;
+    right: 2%;
+}
+
+#status{
+    font-size: x-large;
+    margin:auto;
+    align-self: center;
+    align-content: center;
+    padding-left: 32%;
+    padding-top: 5%;
+}
+
+#side_bar{
+    position: fixed;
+    left: 0%;
+    width: 10%;
+    height: 100%;
+    background-color: #1e2436;
+    top: 0%;
+    color: white;
+
+}
+
+.element{
+padding-left: 35%;
+padding-right: 35%;
+padding-bottom: 20%;
+text-decoration: none;
+color: white;
+font-size: large;
+padding-top: 60%;
+}
+
+.element:hover{
+    background-color: white;
+    color:#1e2436;
+}
+
+.loading {
+    display: none;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
+  
+@keyframes dots {
+50% {
+    opacity: 0;
+    transform: scale(0.7)translateY(10px);
+}
+100% {
+    transform: rotate(360deg);
+}
+}
+
+.loading span {
+display: inline-block;
+width: 40px;
+height: 40px;
+margin: 0 8px;
+border: 4px solid #fff;
+border-radius: 50%;
+animation-name:dots;
+animation-duration: 2s;
+animation-iteration-count: infinite;
+animation-timing-function: ease-in-out;
+border-color: #fff transparent transparent transparent;
+background-color: blue;
+}
+
+
+.loading span:nth-child(2) {
+    background-color: red;
+    animation-delay: 0.4s;
+}
+
+.loading span:nth-child(3) {
+    background-color: yellow;
+    animation-delay: 0.8s;
+}

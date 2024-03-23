@@ -47,7 +47,7 @@ six==1.16.0
 tensorboard==2.16.2
 tensorboard-data-server==0.7.2
 tensorflow==2.16.1
-tensorflow-intel==2.14.1
+tensorflow-intel==1.9.1
 termcolor==2.4.0
 textblob==0.18.0.post0
 threadpoolctl==3.4.0
